@@ -229,9 +229,77 @@ test('deepseek-v4-runtime-guardrails exposes sparse attention runtime flags', ()
   assert.ok(flagNames.includes('cache-coherence-eval'));
   assert.ok(flagNames.includes('speculative-decoding'));
   assert.ok(flagNames.includes('accept-length'));
+  assert.ok(flagNames.includes('draft-length'));
+  assert.ok(flagNames.includes('draft-depth-ratio'));
+  assert.ok(flagNames.includes('claimed-speedup'));
   assert.ok(flagNames.includes('rollout-replay'));
   assert.ok(flagNames.includes('indexer-replay'));
   assert.ok(flagNames.includes('precision-mode'));
+});
+
+test('nvidia-specdecode-al-doctor exposes AL/D speedup flags', () => {
+  const cmd = findCommand('specdecode-al-doctor');
+  const flagNames = cmd.flags.map((f) => f.name);
+  assert.equal(cmd.name, 'nvidia-specdecode-al-doctor');
+  assert.ok(flagNames.includes('json'));
+  assert.ok(flagNames.includes('strict'));
+  assert.ok(flagNames.includes('accept-length'));
+  assert.ok(flagNames.includes('draft-length'));
+  assert.ok(flagNames.includes('draft-depth-ratio'));
+  assert.ok(flagNames.includes('claimed-speedup'));
+  assert.ok(flagNames.includes('query-heads-per-kv'));
+  assert.ok(flagNames.includes('attention-dominated'));
+});
+
+
+
+test('intent-governed-execution exposes HITL and intent flags', () => {
+  const cmd = findCommand('governed-intent');
+  const flagNames = cmd.flags.map((f) => f.name);
+  assert.equal(cmd.name, 'intent-governed-execution');
+  assert.ok(cmd.aliases.includes('cyberstrike-governed'));
+  assert.ok(flagNames.includes('intent'));
+  assert.ok(flagNames.includes('approved'));
+  assert.ok(flagNames.includes('map-only'));
+});
+
+test('jit-harness-compose exposes four-module compose flags', () => {
+  const cmd = findCommand('jit-compose');
+  const flagNames = cmd.flags.map((f) => f.name);
+  assert.equal(cmd.name, 'jit-harness-compose');
+  assert.ok(cmd.aliases.includes('jit-compose'));
+  assert.ok(flagNames.includes('task'));
+  assert.ok(flagNames.includes('map-only'));
+  assert.ok(flagNames.includes('profile'));
+});
+
+test('allowlist-bridge-honesty exposes hop-not-trust flags', () => {
+  const cmd = findCommand('gitlab-sandbox-allowlist');
+  const flagNames = cmd.flags.map((f) => f.name);
+  assert.equal(cmd.name, 'allowlist-bridge-honesty');
+  assert.ok(cmd.aliases.includes('gitlab-sandbox-allowlist'));
+  assert.ok(flagNames.includes('root'));
+  assert.ok(flagNames.includes('treat-allowlist-as-trust'));
+  assert.ok(flagNames.includes('clone-gitlab-duo'));
+});
+
+test('package-manager-honesty-doctor exposes lockfile/CI parity flags', () => {
+  const cmd = findCommand('pnpm12-honesty-doctor');
+  const flagNames = cmd.flags.map((f) => f.name);
+  assert.equal(cmd.name, 'package-manager-honesty-doctor');
+  assert.ok(flagNames.includes('root'));
+  assert.ok(flagNames.includes('propose-switch'));
+  assert.ok(flagNames.includes('allow-ignore-scripts-gaps'));
+});
+
+
+test('workspace-search-route exposes zg-style route flags', () => {
+  const cmd = findCommand('zg-search-route');
+  const flagNames = cmd.flags.map((f) => f.name);
+  assert.equal(cmd.name, 'workspace-search-route');
+  assert.ok(flagNames.includes('json'));
+  assert.ok(flagNames.includes('query'));
+  assert.ok(flagNames.includes('route') || flagNames.includes('rg'));
 });
 
 test('upstream-contributions exposes governed contribution planning flags', () => {

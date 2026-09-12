@@ -219,10 +219,26 @@ const path = require('node:path');
 //   maps six business functions onto existing gates (FORMAT steal, not a SKU).
 //   public-package-parity requires every public/*.html on the files allowlist.
 // 512 -> 513 (2026-08-25): src/alert-noise-ledger.js (+1 measured npm pack).
+// 513 -> 515 (2026-08-28): scripts/graphrag-retrieval.js + scripts/workflow-notebook.js.
+// 517 -> 519 (2026-09-02): scripts/double-blind-eval-protocol.js (missing from files array since PR #3712).
 // Public-shell runtime, not a Core feature: the packaged
 // scripts/gates-engine.js requires it to suppress reminder lines it has
 // already emitted this session.
-const BASELINE_FILE_COUNT = 513;
+// 519 -> 522 (2026-09-04): scripts/radware-threat-defense.js + learn page + config/gates/radware-threat-defense-2026.json (Bot Manager detect→challenge→block).
+// 522 -> 521: unbundle public/learn/* (forbidden npm prefix).
+// 521 → 522: scripts/nvidia-specdecode-al-doctor.js — NVIDIA AL/D
+//            speculative-decoding doctor (speedup ≤ AL/(1+ρD)).
+// 522 → 523: scripts/package-manager-honesty-doctor.js — InfoQ pnpm 12
+//            lockfile/CI parity + switch checkpoint (stay on npm).
+// 523 → 525: jit-harness-compose (#3768)
+// 525 → 527: workspace-search-route (#3770)
+// 527 → 529: intent-governed-execution CyberStrike FORMAT (#3771)
+// 530 → 532: test-all.js + find-dormant-requires.js (#3703 successor)
+// 532 → 534: allowlist-bridge-honesty.js + gitlab-sandbox-allowlist-not-trust skill
+//            (GitLab 2026-09 allowlist-as-bridge FORMAT steal).
+// 534 → 536: openui-catalog-compose-honesty.js + skill — OpenUI FORMAT steal
+//            (catalog-compose-only, root-first, repair-before-claim; not @openuidev).
+const BASELINE_FILE_COUNT = 536;
 
 function readBundleSnapshot() {
   const repoRoot = path.resolve(__dirname, '..');

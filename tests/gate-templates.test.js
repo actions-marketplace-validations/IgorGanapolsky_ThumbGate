@@ -8,6 +8,18 @@ const {
   summarizeGateTemplates,
 } = require('../scripts/gate-templates');
 
+test('checkpoint-allowlist-bridge-not-trust matches claim terms in any order', () => {
+  const templates = listGateTemplates();
+  const gate = templates.find((template) => template.id === 'checkpoint-allowlist-bridge-not-trust');
+  assert.ok(gate);
+  const re = new RegExp(gate.pattern, 'i');
+  assert.equal(re.test('registry.npmjs.org is trusted because it is on the allowlist'), true);
+  assert.equal(re.test('sandbox allowlist trusted npm registry'), true);
+  assert.equal(re.test('trusted npm on the allowlist'), true);
+  assert.equal(re.test('internal.example is trusted because it is on the allowlist'), false);
+  assert.equal(re.test('random prose without hop vocabulary'), false);
+});
+
 test('gate template library exposes curated templates with shared rollout metadata', () => {
   const templates = listGateTemplates();
 
@@ -20,6 +32,7 @@ test('gate template library exposes curated templates with shared rollout metada
   assert.ok(templates.some((template) => template.id === 'block-package-lifecycle-secret-harvest'));
   assert.ok(templates.some((template) => template.id === 'require-local-dependency-vulnerability-scan'));
   assert.ok(templates.some((template) => template.category === 'Supply Chain Safety'));
+  assert.ok(templates.some((template) => template.id === 'checkpoint-allowlist-bridge-not-trust'));
   assert.ok(templates.some((template) => template.category === 'Document RAG Safety'));
   assert.ok(templates.some((template) => template.id === 'require-image-pointer-grounding'));
   assert.ok(templates.some((template) => template.category === 'Sparse Attention Runtime Safety'));
@@ -71,6 +84,55 @@ test('gate template library exposes curated templates with shared rollout metada
   assert.ok(templates.some((template) => template.id === 'ratchet-difficulty-after-verified-pass'));
   assert.ok(templates.some((template) => template.id === 'require-safety-hillclimb-before-rl-post-train'));
 
+  // Claw production-readiness templates (Microsoft Agent Framework harness guide:
+  // observability, Purview-style content screening, hosted shell/fs lockdown, local evals)
+  assert.ok(templates.some((template) => template.id === 'require-claw-observability-before-production'));
+  assert.ok(templates.some((template) => template.id === 'require-policy-content-screening'));
+  assert.ok(templates.some((template) => template.id === 'block-hosted-claw-shell-and-fs'));
+  assert.ok(templates.some((template) => template.id === 'require-local-evals-on-every-change'));
+  for (const id of [
+    'require-claw-observability-before-production',
+    'require-policy-content-screening',
+    'block-hosted-claw-shell-and-fs',
+    'require-local-evals-on-every-change',
+  ]) {
+    const template = templates.find((t) => t.id === id);
+    assert.equal(template.category, 'Claw-Style Enterprise Agent Governance');
+    assert.doesNotThrow(() => new RegExp(template.pattern), `${id} pattern must compile`);
+  }
+  // Hosted lockdown and content screening are hard blocks; observability/evals are advisory-first
+  assert.ok(templates.some((template) => template.id === 'require-policy-content-screening' && template.defaultAction === 'block' && template.severity === 'critical'));
+  assert.ok(templates.some((template) => template.id === 'block-hosted-claw-shell-and-fs' && template.defaultAction === 'block' && template.severity === 'critical'));
+  assert.ok(templates.some((template) => template.id === 'require-claw-observability-before-production' && template.defaultAction === 'warn'));
+  assert.ok(templates.some((template) => template.id === 'require-local-evals-on-every-change' && template.defaultAction === 'warn'));
+
+  // Double-blind holdout (Google DeepMind contamination defense, scripts/eval-holdout.js)
+  assert.ok(templates.some((template) => template.id === 'require-double-blind-holdout-eval'));
+  const holdoutTemplate = templates.find((t) => t.id === 'require-double-blind-holdout-eval');
+  assert.equal(holdoutTemplate.category, 'Eval Integrity');
+  assert.doesNotThrow(() => new RegExp(holdoutTemplate.pattern), 'holdout pattern must compile');
+
+  // AI Governance Operating Plan (30-day plan + OpenAI Codex/Runme workflow loop)
+  assert.ok(templates.some((template) => template.category === 'AI Governance Operating Plan'));
+  const operatingPlanIds = [
+    'require-ai-use-case-inventory',
+    'require-data-classification-before-ai',
+    'require-ai-threat-model-blast-radius',
+    'require-nhi-least-privilege',
+    'require-ai-incident-taxonomy-logging',
+    'require-constrained-ai-pilot',
+    'require-workflow-notebook-plan-approval',
+  ];
+  for (const id of operatingPlanIds) {
+    const template = templates.find((t) => t.id === id);
+    assert.ok(template, `missing AI Governance Operating Plan template: ${id}`);
+    assert.equal(template.category, 'AI Governance Operating Plan');
+    assert.doesNotThrow(() => new RegExp(template.pattern), `${id} pattern must compile`);
+  }
+  // Hard blocks protect data classification and machine-identity scoping
+  assert.ok(templates.some((template) => template.id === 'require-data-classification-before-ai' && template.defaultAction === 'block' && template.severity === 'critical'));
+  assert.ok(templates.some((template) => template.id === 'require-nhi-least-privilege' && template.defaultAction === 'block' && template.severity === 'critical'));
+
   assert.ok(templates.every((template) => template.category));
   assert.ok(templates.every((template) => template.problem));
   assert.ok(templates.every((template) => template.roi));
@@ -85,7 +147,7 @@ test('gate template library summary groups templates by category and action', ()
   assert.equal(summary.categories['Git Safety'], 1);
   assert.equal(summary.categories['Verification'], 1);
   assert.equal(summary.categories['Knowledge Graph Safety'], 3);
-  assert.equal(summary.categories['Supply Chain Safety'], 5);
+  assert.equal(summary.categories['Supply Chain Safety'], 8);
   assert.equal(summary.categories['Document RAG Safety'], 7);
   assert.equal(summary.categories['Sparse Attention Runtime Safety'], 6);
   assert.equal(summary.categories['AI Engineering Stack Safety'], 7);

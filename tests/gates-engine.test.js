@@ -1056,31 +1056,62 @@ async function withConflictingLessonRetrieval(fn) {
   }
 }
 
-test('knowledge conflict warns instead of hard-blocking safe credential chmod', async () => {
+test('knowledge conflict suppresses lesson injection on safe credential chmod (#3689)', async () => {
   cleanupStateFiles();
   await withConflictingLessonRetrieval(() => {
     const output = JSON.parse(run({
       tool_name: 'Bash',
       tool_input: { command: 'chmod 600 ~/.config/gemini/key.json' },
     }));
-    assert.notEqual(output.hookSpecificOutput.permissionDecision, 'deny');
-    assert.match(output.hookSpecificOutput.additionalContext, /Knowledge conflict warning/);
-    assert.match(output.hookSpecificOutput.additionalContext, /do not stop unrelated work solely because memory is noisy/);
+    assert.notEqual(output.hookSpecificOutput?.permissionDecision, 'deny');
+    const ctx = output.hookSpecificOutput?.additionalContext || '';
+    assert.doesNotMatch(ctx, /Knowledge conflict warning/);
+    assert.doesNotMatch(ctx, /Past mistakes relevant to this action/);
   });
   cleanupStateFiles();
 });
 
-test('knowledge conflict warns instead of hard-blocking package setup', async () => {
+test('knowledge conflict suppresses lesson injection on package setup (#3689)', async () => {
   cleanupStateFiles();
   await withConflictingLessonRetrieval(async () => {
     const output = JSON.parse(await runAsync({
       tool_name: 'Bash',
       tool_input: { command: 'pip install paperbanana' },
     }));
-    assert.notEqual(output.hookSpecificOutput.permissionDecision, 'deny');
-    assert.match(output.hookSpecificOutput.additionalContext, /Knowledge conflict warning/);
+    assert.notEqual(output.hookSpecificOutput?.permissionDecision, 'deny');
+    const ctx = output.hookSpecificOutput?.additionalContext || '';
+    assert.doesNotMatch(ctx, /Knowledge conflict warning/);
   });
   cleanupStateFiles();
+});
+
+
+test('low-relevance negative lessons are not injected (#3689)', async () => {
+  cleanupStateFiles();
+  const retrieval = require('../scripts/lesson-retrieval');
+  const originalRetrieve = retrieval.retrieveRelevantLessons;
+  const originalEntropy = retrieval.calculateRetrievalEntropy;
+  retrieval.retrieveRelevantLessons = () => ([{
+    id: 'weak',
+    title: 'MISTAKE: weakly related',
+    content: 'How to avoid: ignore me',
+    signal: 'negative',
+    relevanceScore: 0.2,
+  }]);
+  retrieval.calculateRetrievalEntropy = () => 0.1;
+  try {
+    const output = JSON.parse(run({
+      tool_name: 'Bash',
+      tool_input: { command: 'echo hello' },
+    }));
+    const ctx = output.hookSpecificOutput?.additionalContext || '';
+    assert.doesNotMatch(ctx, /Past mistakes relevant to this action/);
+    assert.doesNotMatch(ctx, /weakly related/);
+  } finally {
+    retrieval.retrieveRelevantLessons = originalRetrieve;
+    retrieval.calculateRetrievalEntropy = originalEntropy;
+    cleanupStateFiles();
+  }
 });
 
 test('strict knowledge conflict mode can still block external destructive side effects', async () => {
@@ -3819,5 +3850,29 @@ test('satisfy_gate evidence mentioning checkout is not a financial hard floor (#
     },
   });
   assert.equal(result, null, 'remedy-tool evidence must not trip financial-control');
+  cleanupStateFiles();
+});
+
+test('self-protect-config denies no-space and multi-redirect shell writes', () => {
+  cleanupStateFiles();
+  const cases = [
+    "printf '%s' '{}' >config/gates/default.json",
+    "printf '%s' '{}' 1> config/gates/default.json",
+    "echo safe >/tmp/out; printf '%s' '{}' > config/gates/default.json",
+    "printf '%s' '{}' 2>/tmp/err >config/gates/default.json",
+    "printf x>config/gates/default.json",
+  ];
+  for (const command of cases) {
+    const output = runHardFloor({ tool_name: 'Bash', tool_input: { command } });
+    assert.ok(output, `expected deny for ${command}`);
+    const hook = JSON.parse(output).hookSpecificOutput;
+    assert.equal(hook.permissionDecision, 'deny', command);
+    assert.match(hook.permissionDecisionReason, /\[GATE:self-protect-config\]/, command);
+  }
+  // Unrelated redirect must stay allowed through this hard floor.
+  assert.equal(runHardFloor({
+    tool_name: 'Bash',
+    tool_input: { command: "printf '%s' 'ok' >/tmp/thumbgate-benign.txt" },
+  }), null);
   cleanupStateFiles();
 });

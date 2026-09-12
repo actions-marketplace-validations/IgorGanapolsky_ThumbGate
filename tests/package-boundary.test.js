@@ -478,11 +478,21 @@ test('npm package ships a slim runtime boundary instead of repo/dev surfaces', (
     //   Lockstep with public-bundle-ratchet + public-core-boundary.
     // 511 -> 512 (2026-08-25): public/yt.html YouTube/CPC dedicated landing.
     // 512 -> 513 (2026-08-25): src/alert-noise-ledger.js (+1 measured npm pack).
+    // 513 -> 515 (2026-08-28): scripts/graphrag-retrieval.js + scripts/workflow-notebook.js.
     // Public-shell runtime, not a Core feature: the packaged
     // scripts/gates-engine.js requires it to suppress reminder lines it has
     // already emitted this session.
-    manifest.fileCount <= 513,
-    `npm package should stay <= 513 files, got ${manifest.fileCount}`
+  // 519 -> 522 (2026-09-04): radware-threat-defense.js + learn page + config/gates/radware-threat-defense-2026.json.
+  // 521 -> 522: scripts/nvidia-specdecode-al-doctor.js (AL/D doctor).
+  // 522 -> 523: scripts/package-manager-honesty-doctor.js (pnpm 12 honesty).
+  // 525 -> 527: workspace-search-route (#3770)
+  // 527 -> 529: intent-governed-execution (#3771 CyberStrike FORMAT).
+  // 529 -> 530: memory-vs-rag-route.js (Supermemory FORMAT steal).
+  // 530 -> 532: test-all.js + find-dormant-requires.js (aggregate runner, #3703 successor).
+  // 532 -> 534: allowlist-bridge-honesty.js + gitlab-sandbox-allowlist-not-trust skill.
+  // 534 -> 536: openui-catalog-compose-honesty.js + skill — OpenUI FORMAT steal.
+    manifest.fileCount <= 536,
+    `npm package should stay <= 536 files, got ${manifest.fileCount}`
   );
   // Ceiling bumped from 2.75 MB → 2.85 MB (2026-04-16) to accommodate the
   // incremental review-delta demo content in public/dashboard.html landing
@@ -681,9 +691,20 @@ test('npm package ships a slim runtime boundary instead of repo/dev surfaces', (
   // history-sync feedback rankable added ~1.2 KB of runtime logic + comments to
   // shipped hybrid-feedback-context.js on top of the ledger bump above.
   // Measured 8,031,249 unpacked on the merged tree — 1,249 over the old cap.
+  // Bumped 8.09 MB -> 8.10 MB (2026-09-03, PR #3715): workflow-notebook.js
+    // Bumped 8.10 MB -> 8.20 MB (2026-09-03, PR #3714): codex-runbook-flywheel.js + lock file sync
+  // gained optimistic concurrency (_rev), auth boundary on approveNotebook,
+  // and listNotebooks now enumerates JSON — ~1.6 KB of guard logic.
+  // Measured 8,091,622 unpacked on the merged tree — 1,622 over the old cap.
+  // Bumped 8.20 MB -> 8.21 MB (2026-09-04, PR #3762): nvidia-specdecode-al-doctor.js
+  // AL/D fail-closed doctor (~15 KB packaged). Measured 8,205,606 unpacked —
+  // Bumped 8.21 MB -> 8.25 MB (2026-09-04): package-manager-honesty-doctor.js on top of AL/D.
+  // Bumped 8.25 MB -> 8.30 MB (2026-09-04): workspace-search-route.js zg FORMAT steal.
+  // 5,606 over the old cap. Narrow headroom retained.
   assert.ok(
-    manifest.unpackedSize <= 8_040_000,
-    `npm package should stay <= 8.04 MB unpacked, got ${manifest.unpackedSize}`
+  // Bumped 8.35 MB -> 8.40 MB (2026-09-04): intent-governed-execution after zg.
+    manifest.unpackedSize <= 8_400_000,
+    `npm package should stay <= 8.40 MB unpacked, got ${manifest.unpackedSize}`
   );
 
   for (const file of requiredRuntimeFiles) {

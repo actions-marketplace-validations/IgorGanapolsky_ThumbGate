@@ -2627,6 +2627,156 @@ function deepseekV4RuntimeGuardrails() {
   process.stdout.write(formatDeepSeekV4RuntimeGuardrailsPlan(report));
 }
 
+function nvidiaSpecDecodeAlDoctor() {
+  const args = parseArgs(process.argv.slice(3));
+  const {
+    buildNvidiaSpecDecodeAlDoctorReport,
+    formatNvidiaSpecDecodeAlDoctorReport,
+  } = require(path.join(PKG_ROOT, 'scripts', 'nvidia-specdecode-al-doctor'));
+  const report = buildNvidiaSpecDecodeAlDoctorReport(args);
+
+  if (args.json) {
+    console.log(JSON.stringify(report, null, 2));
+  } else {
+    process.stdout.write(formatNvidiaSpecDecodeAlDoctorReport(report));
+  }
+
+  if (args.strict && report.status !== 'ready') {
+    process.exitCode = 1;
+    return;
+  }
+  if (report.status === 'fail') process.exitCode = 1;
+}
+
+
+
+function intentGovernedExecution() {
+  const args = parseArgs(process.argv.slice(3));
+  const {
+    buildIntentGovernedExecutionReport,
+    formatIntentGovernedExecutionReport,
+  } = require(path.join(PKG_ROOT, 'scripts', 'intent-governed-execution'));
+  const report = buildIntentGovernedExecutionReport(args);
+
+  if (args.json) {
+    console.log(JSON.stringify(report, null, 2));
+  } else {
+    process.stdout.write(formatIntentGovernedExecutionReport(report));
+  }
+
+  if (args.strict && report.status !== 'ready') {
+    process.exitCode = 1;
+    return;
+  }
+  if (report.status === 'fail') process.exitCode = 1;
+}
+
+function jitHarnessCompose() {
+  const args = parseArgs(process.argv.slice(3));
+  const {
+    buildJitHarnessComposeReport,
+    formatJitHarnessComposeReport,
+  } = require(path.join(PKG_ROOT, 'scripts', 'jit-harness-compose'));
+  const report = buildJitHarnessComposeReport(args);
+
+  if (args.json) {
+    console.log(JSON.stringify(report, null, 2));
+  } else {
+    process.stdout.write(formatJitHarnessComposeReport(report));
+  }
+
+  if (args.strict && report.status !== 'ready') {
+    process.exitCode = 1;
+    return;
+  }
+  if (report.status === 'fail') process.exitCode = 1;
+}
+
+function allowlistBridgeHonestyDoctor() {
+  const args = parseArgs(process.argv.slice(3));
+  const {
+    buildAllowlistBridgeHonestyReport,
+    formatAllowlistBridgeHonestyReport,
+  } = require(path.join(PKG_ROOT, 'scripts', 'allowlist-bridge-honesty'));
+  const report = buildAllowlistBridgeHonestyReport(args);
+
+  if (args.json) {
+    console.log(JSON.stringify(report, null, 2));
+  } else {
+    process.stdout.write(formatAllowlistBridgeHonestyReport(report));
+  }
+
+  if (args.strict && report.status !== 'ready') {
+    process.exitCode = 1;
+    return;
+  }
+  if (report.status === 'fail') process.exitCode = 1;
+}
+
+function packageManagerHonestyDoctor() {
+  const args = parseArgs(process.argv.slice(3));
+  const {
+    buildPackageManagerHonestyReport,
+    formatPackageManagerHonestyReport,
+  } = require(path.join(PKG_ROOT, 'scripts', 'package-manager-honesty-doctor'));
+  const report = buildPackageManagerHonestyReport(args);
+
+  if (args.json) {
+    console.log(JSON.stringify(report, null, 2));
+  } else {
+    process.stdout.write(formatPackageManagerHonestyReport(report));
+  }
+
+  if (args.strict && report.status !== 'ready') {
+    process.exitCode = 1;
+    return;
+  }
+  if (report.status === 'fail') process.exitCode = 1;
+}
+
+function openuiCatalogComposeHonestyDoctor() {
+  const args = parseArgs(process.argv.slice(3));
+  const {
+    buildOpenuiCatalogComposeHonestyReport,
+    formatOpenuiCatalogComposeHonestyReport,
+  } = require(path.join(PKG_ROOT, 'scripts', 'openui-catalog-compose-honesty'));
+  const report = buildOpenuiCatalogComposeHonestyReport(args);
+
+  if (args.json) {
+    console.log(JSON.stringify(report, null, 2));
+  } else {
+    process.stdout.write(formatOpenuiCatalogComposeHonestyReport(report));
+  }
+
+  if (args.strict && report.status !== 'ready') {
+    process.exitCode = 1;
+    return;
+  }
+  if (report.status === 'fail') process.exitCode = 1;
+}
+
+
+async function workspaceSearchRoute() {
+  const args = parseArgs(process.argv.slice(3));
+  const {
+    buildWorkspaceSearchRouteReport,
+    formatWorkspaceSearchRouteReport,
+  } = require(path.join(PKG_ROOT, 'scripts', 'workspace-search-route'));
+  const report = await buildWorkspaceSearchRouteReport(args);
+
+  if (args.json) {
+    console.log(JSON.stringify(report, null, 2));
+  } else {
+    process.stdout.write(formatWorkspaceSearchRouteReport(report));
+  }
+
+  if (args.strict && report.status !== 'ready') {
+    process.exitCode = 1;
+    return;
+  }
+  if (report.status === 'fail') process.exitCode = 1;
+}
+
 function upstreamContributions() {
   const args = parseArgs(process.argv.slice(3));
   const {
@@ -3407,6 +3557,13 @@ function help() {
   console.log('  long-running-agent-context-guardrails Map structured-memory gaps to long-running agent gates');
   console.log('  reasoning-efficiency-guardrails Map reasoning compression signals to efficiency gates');
   console.log('  deepseek-v4-runtime-guardrails Map sparse-attention runtime signals to safety gates');
+  console.log('  nvidia-specdecode-al-doctor Check speculative AL/D evidence vs AL/(1+ρD) speedup math');
+  console.log('  package-manager-honesty-doctor Audit lockfile/CI parity; fail-closed manager switches');
+  console.log('  openui-catalog-compose-honesty Catalog-compose-only + repair-before-claim (OpenUI FORMAT)');
+  console.log('  allowlist-bridge-honesty Audit allowlisted registries/proxies as hops, not trust boundaries');
+  console.log('  jit-harness-compose   Compose memory/planning/action/capability onto existing rails (JIT FORMAT)');
+  console.log('  workspace-search-route     Route query to rg/fts/vector/hybrid/graph (zg FORMAT)');
+  console.log('  intent-governed-execution  NL intent → classify/authorize/gate/HITL/evidence (CyberStrike FORMAT)');
   console.log('  background-governance Background-agent run report and dispatch risk check');
   console.log('  analytics             Unified analytics snapshot (npm, GitHub, landing)');
   console.log('  inventory             Agent action inventory: tool calls, gate denies, false-deny rate');
@@ -3443,6 +3600,13 @@ function help() {
   console.log('  npx thumbgate long-running-agent-context-guardrails --request-count=80 --output-mb=3 --raw-chat-only --json');
   console.log('  npx thumbgate reasoning-efficiency-guardrails --baseline-tokens=1200 --compressed-tokens=980 --baseline-accuracy=0.84 --compressed-accuracy=0.85 --verifier --json');
   console.log('  npx thumbgate deepseek-v4-runtime-guardrails --context-tokens=900000 --hybrid-attention --speculative-decoding --accept-length=1.4 --precision-mode=fp8 --json');
+  console.log('  npx thumbgate nvidia-specdecode-al-doctor --speculative-decoding --accept-length=1.4 --draft-length=7 --draft-depth-ratio=0.05 --claimed-speedup=3 --json');
+  console.log('  npx thumbgate package-manager-honesty-doctor --propose-switch=pnpm --json');
+  console.log('  npx thumbgate openui-catalog-compose-honesty --catalog=catalog.json --stream=compose.txt --repair --json');
+  console.log('  npx thumbgate allowlist-bridge-honesty --json');
+  console.log('  npx thumbgate jit-harness-compose --task="implement PreToolUse gate fix" --json');
+  console.log('  npx thumbgate workspace-search-route --query="how does X connect" --json');
+  console.log('  npx thumbgate intent-governed-execution --intent="railway deploy" --json');
   console.log('  npx thumbgate upstream-contributions --max-repos=10 --write');
   console.log('  npx thumbgate background-governance --json');
   console.log('  npx thumbgate background-governance --check --agent-id=builder --branch=main --files-changed=25 --json');
@@ -4070,6 +4234,51 @@ switch (COMMAND) {
   case 'deepseek-runtime-guardrails':
   case 'sparse-attention-runtime-guardrails':
     deepseekV4RuntimeGuardrails();
+    break;
+  case 'nvidia-specdecode-al-doctor':
+  case 'specdecode-al-doctor':
+  case 'speculative-decoding-al-doctor':
+  case 'nvidia-speculative-decoding-doctor':
+    nvidiaSpecDecodeAlDoctor();
+    break;
+  case 'package-manager-honesty-doctor':
+  case 'pm-honesty-doctor':
+  case 'pnpm12-honesty-doctor':
+  case 'lockfile-ci-parity-doctor':
+    packageManagerHonestyDoctor();
+    break;
+  case 'openui-catalog-compose-honesty':
+  case 'openui-honesty-doctor':
+  case 'catalog-compose-honesty':
+  case 'repair-before-compose-claim':
+    openuiCatalogComposeHonestyDoctor();
+    break;
+  case 'allowlist-bridge-honesty':
+  case 'gitlab-sandbox-allowlist':
+  case 'allowlist-not-trust':
+  case 'trust-handoff-honesty':
+    allowlistBridgeHonestyDoctor();
+    break;
+  case 'jit-harness-compose':
+  case 'jit-compose':
+  case 'jit-harness':
+  case 'harness-compose':
+    jitHarnessCompose();
+    break;
+  case 'workspace-search-route':
+  case 'zg-search-route':
+  case 'zvec-grep-route':
+  case 'search-route':
+    workspaceSearchRoute().catch((err) => {
+      console.error(err && err.stack ? err.stack : err);
+      process.exitCode = 1;
+    });
+    break;
+  case 'intent-governed-execution':
+  case 'governed-intent':
+  case 'cyberstrike-governed':
+  case 'intent-govern':
+    intentGovernedExecution();
     break;
   case 'long-running-agent-context-guardrails':
   case 'agent-context-guardrails':

@@ -4,15 +4,46 @@
 
 ## Session PR Management and System Hygiene
 
-At session start, read `CLAUDE.md`, `AGENTS.md`, and `GEMINI.md`; query the
-local ThumbGate memory; inspect every open PR, remote branch, worktree, and
+At session start, run `bin/agent-loop --health --json` (fail closed), then read
+`CLAUDE.md`, `AGENTS.md`, and `GEMINI.md`; query the local ThumbGate memory;
+inspect every open PR, **every open GitHub Issue**, remote branch, worktree, and
 current `main` CI run before changing repository state.
 
 In PR-management sessions, reconcile GitHub Issues and Actions plus any
-available Linear AI and local Obsidian coordination surfaces. If Linear,
-`~/Documents/AI-Agent-Sync`, or the standalone `copilot` CLI is unavailable,
-record that fact and continue with deterministic `gh`, git, and repository
-checks. Copilot advice is never authoritative.
+available Linear AI and local Obsidian coordination surfaces. Close or advance
+actionable Issues in the same session — do not leave the Issues board untouched
+while only draining PRs. If Linear, `~/Documents/AI-Agent-Sync`, or the
+standalone `copilot` CLI is unavailable, record that fact and continue with
+deterministic `gh`, git, and repository checks. Copilot advice is never
+authoritative.
+
+### Fleet Coordination Contract (Mandatory, Every Agent, Every Session)
+
+Multiple agents (Claude Code, Codex, grok, Gemini, Hermes) work this repo and
+the `~/Documents/AI-Agent-Sync` Obsidian vault concurrently. Before ANY state
+mutation — checkout switch, clean/reset, branch or worktree creation, push, PR
+open/merge, or vault write — complete the coordination sweep:
+
+```bash
+bash .claude/scripts/session-bootstrap/fleet-coordination-check.sh
+```
+
+The sweep (read-only) reports: the single-writer checkout lease, active vault
+claims touching ThumbGate, vault dirty-writer signals, live herdr panes (when
+the gateway is up), Linear issues in flight, and the open-PR census. Skill:
+`.claude/skills/fleet-coordination/SKILL.md` (also wired into
+`.claude/settings.json` SessionStart so Claude Code runs it automatically).
+
+Non-negotiable rules:
+
+1. One live session owns a checkout (`node scripts/session-lease.js claim`).
+   A live foreign lease means use a separate worktree, not a force-checkout.
+2. Never `git add -A` in a shared checkout. Stage explicit paths only.
+3. Check `Agent-Jobs/running/` in the vault before claiming or editing shared
+   project files; treat live claims as owned until stale (>7d or dead PID).
+4. Never write to another agent's state file. Commit only your own vault file
+   via PR; the vault has its own branch protection.
+5. Do not duplicate an open PR or an open Linear issue. Claim first, then work.
 
 For session closure:
 
@@ -65,6 +96,28 @@ If the system is making $0/day, you must prioritize outreach and discovery injec
 ## Studio Execution Policy
 
 This project uses a local-first **Reliability Gateway** operational loop.
+
+## ExplainX trending (honest)
+
+Parse live https://explainx.ai/trending scores; map onto existing rails; never invent ROI; never auto-install.
+
+```bash
+npm run explainx:trending -- --fixture tests/fixtures/explainx-trending-rsc-snippet.html
+npm run explainx:trending -- --fetch --top 10 --json
+```
+
+Visual answers: `.agents/skills/show-me/SKILL.md` (`/show-me`). Details: `docs/agents/explainx-trending.md`.
+
+## Memory vs RAG (Supermemory steal)
+
+RAG = graphify/docs (stateless). Memory = lesson store with complete four-field scope (stateful). Profile = always-on static+dynamic facts. Do not clone Supermemory SaaS.
+
+```bash
+npm run memory:vs-rag -- --query "how does PreToolUse work?"
+npm run memory:vs-rag -- --query "what did we decide?" --entity entity-id --project project-id --process process-id --session session-id --json
+```
+
+Details: [`docs/agents/memory-vs-rag.md`](./docs/agents/memory-vs-rag.md).
 
 ## Canonical Product Scope
 
@@ -251,3 +304,25 @@ For every explicit PR-management and system-hygiene session:
 7. Record lessons in local memory and report whether memory helped or hindered.
 
 Use **“Done merging PRs. CI passing. System hygiene complete. Ready for next session.”** only when every condition above is verified. Otherwise report exact blockers and do not use that sentence.
+
+## Code search (Graphify-Labs)
+
+Local AST knowledge graph via [Graphify-Labs/graphify](https://github.com/Graphify-Labs/graphify) (`graphifyy` on PyPI). Not a vector store. Not a ThumbGate SKU.
+
+```bash
+npm run graphify:setup          # .graphify-venv + graphify-out/graph.json
+npm run graphify:ready -- --require-graph
+.graphify-venv/bin/graphify query "how does X connect to Y?"
+.graphify-venv/bin/graphify path "<A>" "<B>"
+.graphify-venv/bin/graphify explain "<concept>"
+```
+
+Rules:
+- Prefer `query` / `path` / `explain` over raw grep for architecture questions when `graphify-out/graph.json` exists.
+- After large code changes: `.graphify-venv/bin/graphify update . --no-cluster`
+- `graph.html` / `GRAPH_REPORT.md` are review aids, not retrieval.
+- Dirty `graphify-out/` is expected and gitignored — not a reason to skip Graphify.
+- Do not dual-edit DIRTY lesson-store graph PR #3650.
+
+Details: [`docs/agents/code-search.md`](./docs/agents/code-search.md). Skill: `.agents/skills/graphify/SKILL.md`.
+

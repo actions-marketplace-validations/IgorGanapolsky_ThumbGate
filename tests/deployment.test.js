@@ -430,7 +430,7 @@ test('Deploy to Railway hard-gates build health and keeps revenue readiness advi
   assert.match(ownershipStep, /node scripts\/verify-npm-githead\.js/);
   assert.match(ownershipStep, /--expected-sha="\$GITHUB_SHA"/);
   assert.match(ownershipStep, /--max-attempts=(?:[3-9][0-9]|[1-9][0-9]{2,})/);
-  assert.doesNotMatch(ownershipStep, /--allow-unpublished/);
+  assert.match(ownershipStep, /--allow-unpublished/, 'content merges between npm releases must not red the Railway Deploy workflow');
   assert.ok(revenueIndex > healthIndex, 'revenue readiness must inspect the promoted build after SHA verification');
   assert.ok(revenueIndex > behaviorIndex, 'revenue readiness follows the hard authenticated behavior gate');
   assert.ok(evidenceIndex > revenueIndex, 'revenue evidence upload must follow the advisory probe');
@@ -745,9 +745,18 @@ test('Publish to NPM workflow uses the tested publish-decision guardrail', () =>
   assert.match(workflow, /group:\s*publish-npm-\$\{\{\s*github\.workflow\s*\}\}-\$\{\{\s*github\.ref\s*\}\}/);
   assert.match(workflow, /cancel-in-progress:\s*false/);
   assert.match(workflow, /permissions:\s+contents:\s+write\s+id-token:\s+write/s);
+  assert.match(workflow, /Publishing via GitHub Actions OIDC trusted publisher/);
+  assert.match(workflow, /THUMBGATE_NPM_TOKEN_FALLBACK/);
   assert.match(workflow, /node-version:\s*'24\.x'/);
   assert.match(workflow, /timeout-minutes:\s*25/);
-  assert.match(workflow, /cache:\s*'npm'/);
+  assert.match(workflow, /package-manager-cache:\s*false/);
+  assert.doesNotMatch(workflow, /cache:\s*'npm'/);
+  assert.match(workflow, /Require npm CLI for OIDC trusted publishing/);
+  assert.match(workflow, /Trusted publishing needs npm >= 11\.5\.1/);
+  assert.match(workflow, /node scripts\/npm-oidc-cli-floor\.js --version=/);
+  assert.match(workflow, /token_fallback:/);
+  assert.match(workflow, /GAT bypass-2FA direct publish is scheduled to die Jan 2027/);
+  assert.match(workflow, /Allow npm publish/);
   assert.match(workflow, /name: Run release safety checks/);
   assert.match(workflow, /node scripts\/sync-version\.js --check/);
   assert.match(workflow, /npm run test:deployment/);
@@ -780,7 +789,9 @@ test('Publish to NPM workflow uses the tested publish-decision guardrail', () =>
     /Treating this no-op as release-audited until the next versioned publish lands\./,
     'the unbounded exemption must not return',
   );
-  assert.match(workflow, /npm publish --tag "\$\{\{\s*steps\.plan\.outputs\.npm_tag \|\| 'latest'\s*\}\}" --provenance/);
+  assert.match(workflow, /NPM_TAG:\s*\$\{\{\s*steps\.plan\.outputs\.npm_tag \|\| 'latest'\s*\}\}/);
+  assert.match(workflow, /npm publish --tag "\$\{NPM_TAG\}" --provenance/);
+  assert.match(workflow, /unset NODE_AUTH_TOKEN/);
   assert.match(workflow, /--install-attempts 12 --install-delay-ms 10000/);
 });
 

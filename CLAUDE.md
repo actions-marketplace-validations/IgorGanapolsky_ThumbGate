@@ -400,17 +400,31 @@ Adopted 2026-05-12 after a full PR/branch sweep. Persisted here so every future 
 - Keep public multi-agent workflows durable and executable without hosted-only modules; persist states, preserve failures, and terminate timed-out worker process groups.
 - Production monitoring is not healthy until at least 20 measured task outcomes and 20 observed tool calls pass the configured threshold set.
 
+## Code search (Graphify-Labs)
+
+Use Graphify-Labs `graphify` for architecture queries when wired:
+
+```bash
+npm run graphify:setup
+.graphify-venv/bin/graphify query "<question>"
+```
+
+See `docs/agents/code-search.md`. Do not clone Graphify into a ThumbGate SKU; do not dual-edit DIRTY lesson-graph PR #3650.
+
 ## Context Engineering (HF course → ThumbGate)
 
 We practice **context engineering** ([HF Context Course](https://huggingface.co/learn/context-course/unit0/introduction)): structure skills, MCP, plugins/workflows, sub-agents, and hooks so agents find and obey the right knowledge.
 
 | Layer | Location |
 |-------|----------|
+| Agent loop | `bin/agent-loop` — Recollect→Plan→Observe→Act→Evaluate→Learn; `bin/agent-loop --health --json` for CI/session-start |
 | Skills | `skills/*`, `~/.grok/skills/*` — checklist: `/context-engineering-checklist` |
 | MCP | `adapters/mcp/`, profiles in `config/mcp-allowlists.json` |
 | Workflows | `.grok/workflows/*.rhai` — GSD review: `/context-engineering-pr-check` |
 | Sub-agents | Parallel workflows + Linear/vault ownership (`/gsd-ralph-context-loop`) |
 | Hooks | PreToolUse: `gate-check`, spend-guard, outbound-email-guard |
+
+**Session start:** run `bin/agent-loop` (or `bin/agent-loop --health --json`). Health fails closed when required context-layer files are missing.
 
 **GSD:** Capture → Clarify → Organize → Execute → Review.  
 **Ralph:** Observe → Act → Feedback → Promote (**matchable** surfaces) → Enforce.  

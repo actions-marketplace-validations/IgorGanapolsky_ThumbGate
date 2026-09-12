@@ -146,6 +146,10 @@ const BOOSTED_RISK_MIN_EXAMPLES = 3;
 const PR_THREAD_RESOLUTION_ACTION = 'pr_thread_resolution_verified_after_commit';
 const HELPER_BYPASS_ACTION = 'helper_script_modified';
 const KNOWLEDGE_ENTROPY_THRESHOLD = 0.7;
+// Issue #3689: do not inject lessons that only barely matched. Retrieval already
+// filters >0.1 for ranking; injection requires a higher bar so low-relevance
+// memories cannot ride along with an entropy disclaimer.
+const MIN_LESSON_INJECTION_RELEVANCE = 0.75;
 // Generous character bound: keeps every affected file for realistic actions while still
 // preventing an unbounded haystack. Chosen over a file-count cap, which dropped targets.
 const MEMORY_GUARD_MAX_SERIALIZED_CHARS = 200000;
@@ -335,19 +339,51 @@ function commandContainsSequence(words, sequence) {
 }
 
 function commandHasPostMethod(words) {
-  for (let i = 0; i < words.length; i += 1) {
-    const word = words[i];
-    if ((word === '-x' || word === '--method') && words[i + 1] === 'post') return true;
-    if (word === '--method=post' || word === '-xpost') return true;
+  return ghApiHttpMethod(words) === 'post';
+}
+
+function ghApiHttpMethod(words) {
+  const list = Array.isArray(words) ? words : [];
+  for (let i = 0; i < list.length; i += 1) {
+    const word = list[i];
+    if ((word === '-x' || word === '--method') && list[i + 1]) return String(list[i + 1]).toLowerCase();
+    if (word.startsWith('--method=')) return word.slice('--method='.length).toLowerCase();
+    if (word.startsWith('-x') && word.length > 2 && !word.startsWith('-x=')) {
+      return word.slice(2).toLowerCase();
+    }
   }
-  return false;
+  return null;
+}
+
+function ghApiEndpoint(words) {
+  const list = Array.isArray(words) ? words : [];
+  const apiIndex = list.findIndex((word, i) => word === 'api' && list[i - 1] === 'gh');
+  if (apiIndex < 0) return null;
+  const flagsWithValue = new Set([
+    '-x', '--method', '-f', '--field', '-F', '--raw-field',
+    '-h', '--header', '--hostname', '--jq', '--input', '--cache',
+  ]);
+  for (let i = apiIndex + 1; i < list.length; i += 1) {
+    const word = list[i];
+    if (word.startsWith('-')) {
+      if (word.includes('=')) continue;
+      if (flagsWithValue.has(word)) i += 1;
+      continue;
+    }
+    return word;
+  }
+  return null;
 }
 
 function isGhApiPrCreateCommand(command) {
   const words = commandWords(command);
   if (!commandContainsSequence(words, ['gh', 'api'])) return false;
-  const hasPullsEndpoint = words.some((word) => word === '/pulls' || word.endsWith('/pulls'));
-  if (!hasPullsEndpoint) return false;
+  const method = ghApiHttpMethod(words);
+  if (method && method !== 'post') return false;
+  const endpoint = ghApiEndpoint(words);
+  if (!endpoint) return false;
+  if (/\/pulls\/\d+/.test(endpoint)) return false;
+  if (!(endpoint === '/pulls' || /\/pulls$/.test(endpoint))) return false;
   const fieldFlags = new Set(['-f', '--field', '--raw-field']);
   const hasFieldWrite = words.some((word) => (
     fieldFlags.has(word) ||
@@ -2272,8 +2308,13 @@ function recordHelperScriptWrite(toolName, toolInput = {}) {
     packageScriptTouched,
     reasons,
   };
-  trackAction(HELPER_BYPASS_ACTION, metadata);
+  trackAction(helperBypassActionKey(), metadata);
   return metadata;
+}
+
+function helperBypassActionKey() {
+  const sessionId = currentScopeSessionId();
+  return sessionId ? `${HELPER_BYPASS_ACTION}:${sessionId}` : HELPER_BYPASS_ACTION;
 }
 
 function evaluateStatefulHelperBypassGate(toolName, toolInput = {}) {
@@ -2301,7 +2342,7 @@ function evaluateStatefulHelperBypassGate(toolName, toolInput = {}) {
 
   const writeMetadata = recordHelperScriptWrite(toolName, toolInput);
   const actions = listSessionActions();
-  const recentWrite = actions[HELPER_BYPASS_ACTION];
+  const recentWrite = actions[helperBypassActionKey()];
   const recentMetadata = recentWrite && recentWrite.metadata && typeof recentWrite.metadata === 'object'
     ? recentWrite.metadata
     : null;
@@ -2810,6 +2851,10 @@ function matchGate(gate, toolName, toolInput = {}) {
         if (isSafeLocalCredentialHardeningCommand(toolName, toolInput)) {
           return { matched: false, matchText, affectedFiles };
         }
+      } else if (gate.id === 'gh-api-pr-create-restricted') {
+        if (!isGhApiPrCreateCommand(String(toolInput.command || ''))) {
+          return { matched: false, matchText, affectedFiles };
+        }
       } else {
         const regex = new RegExp(gate.pattern);
         // Match command text, tool name, and light payload surfaces. MCP tools
@@ -2886,7 +2931,6 @@ function matchGate(gate, toolName, toolInput = {}) {
     matchText,
     affectedFiles,
     taskScopeViolation,
-    protectedApprovalViolation,
     branchGovernanceViolation,
   };
 }
@@ -2912,6 +2956,7 @@ function matchSelfProtectHardFloor(gate, toolName, toolInput = {}) {
 
   const command = String(toolInput.command || '');
   let matchText = command;
+
   if (gate.id === 'self-protect-config' || gate.id === 'self-protect-hooks-disable') {
     const targetPattern = gate.id === 'self-protect-config'
       ? SELF_PROTECT_CONFIG_TARGET_PATTERN
@@ -2923,7 +2968,28 @@ function matchSelfProtectHardFloor(gate, toolName, toolInput = {}) {
       const commandTargetPattern = gate.id === 'self-protect-config'
         ? SELF_PROTECT_CONFIG_COMMAND_PATTERN
         : SELF_PROTECT_HOOK_COMMAND_PATTERN;
-      if (!SHELL_FILE_MUTATION_PATTERN.test(command) || !commandTargetPattern.test(command)) return null;
+
+      // Inspect every shell redirection destination (optional fd, optional/no
+      // spaces, attached forms like printf x>file, multiple redirects).
+      const redirectPattern = /(?:^|[\s;&|]|[^\s;&|<>])(?:\d*)>{1,2}\s*([^\s;&|<>]+)/g;
+      const redirectTargets = [];
+      let redirectMatch = redirectPattern.exec(command);
+      while (redirectMatch) {
+        if (redirectMatch[1]) redirectTargets.push(redirectMatch[1]);
+        redirectMatch = redirectPattern.exec(command);
+      }
+      if (redirectTargets.length > 0) {
+        // Deny when any redirect destination is protected.
+        if (redirectTargets.some((target) => commandTargetPattern.test(target))) {
+          // fall through to deny
+        } else if (!SHELL_FILE_MUTATION_PATTERN.test(command) || !commandTargetPattern.test(command)) {
+          // Benign redirects and no other protected mutation → allow.
+          return null;
+        }
+        // Benign redirects but command still mutates a protected path another way → deny.
+      } else {
+        if (!SHELL_FILE_MUTATION_PATTERN.test(command) || !commandTargetPattern.test(command)) return null;
+      }
     } else {
       return null;
     }
@@ -3223,6 +3289,27 @@ async function evaluateGatesAsyncInner(toolName, toolInput, configPath) {
     try {
       const { selectHarness } = require('./harness-selector');
       harnessPath = selectHarness(toolName, toolInput);
+      try {
+        // Opt-in RateBurst only (THUMBGATE_RADWARE_RATE=1). Never persist in tests/CI.
+        if (process.env.THUMBGATE_RADWARE_RATE === '1') {
+          const radware = require('./radware-threat-defense.js');
+          const inTest = Boolean(process.env.NODE_TEST || process.env.NODE_TEST_CONTEXT || process.env.CI || process.env.GITHUB_ACTIONS || process.env.VITEST || process.argv.some((a) => a.includes('node:test') || a.endsWith('.test.js')));
+          if (!inTest) {
+            radware.persistCallTimestamp();
+            const burst = radware.checkRateBurst(radware.loadCallTimestamps());
+            if (burst.tripped) {
+              return recordStructuralGateBlock(toolName, toolInput, {
+                decision: 'deny',
+                gate: 'algorithmic-token-drain-circuit-breaker',
+                action: 'block',
+                severity: 'high',
+                message: burst.message,
+                receipt: 'threat_defense_interdicted=true:type=RateBurst:action=block',
+              });
+            }
+          }
+        }
+      } catch { /* optional */ }
     } catch { /* harness-selector is optional */ }
     config = loadGatesConfig(configPath, harnessPath);
   } catch {
@@ -3546,6 +3633,27 @@ function evaluateGatesInner(toolName, toolInput, configPath) {
     try {
       const { selectHarness } = require('./harness-selector');
       harnessPath = selectHarness(toolName, toolInput);
+      try {
+        // Opt-in RateBurst only (THUMBGATE_RADWARE_RATE=1). Never persist in tests/CI.
+        if (process.env.THUMBGATE_RADWARE_RATE === '1') {
+          const radware = require('./radware-threat-defense.js');
+          const inTest = Boolean(process.env.NODE_TEST || process.env.NODE_TEST_CONTEXT || process.env.CI || process.env.GITHUB_ACTIONS || process.env.VITEST || process.argv.some((a) => a.includes('node:test') || a.endsWith('.test.js')));
+          if (!inTest) {
+            radware.persistCallTimestamp();
+            const burst = radware.checkRateBurst(radware.loadCallTimestamps());
+            if (burst.tripped) {
+              return recordStructuralGateBlock(toolName, toolInput, {
+                decision: 'deny',
+                gate: 'algorithmic-token-drain-circuit-breaker',
+                action: 'block',
+                severity: 'high',
+                message: burst.message,
+                receipt: 'threat_defense_interdicted=true:type=RateBurst:action=block',
+              });
+            }
+          }
+        }
+      } catch { /* optional */ }
     } catch { /* harness-selector is optional */ }
     config = loadGatesConfig(configPath, harnessPath);
   } catch {
@@ -4348,7 +4456,11 @@ async function buildRelevantLessonContextAsync(toolName, toolInput) {
  * negative lesson present is relevant enough to surface.
  */
 function formatNegativeLessonContext(lessons) {
-  const negative = (lessons || []).filter((l) => l.signal === 'negative');
+  const negative = (lessons || []).filter((l) => {
+    if (l.signal !== 'negative') return false;
+    const score = Number(l.rerankedScore ?? l.relevanceScore ?? 0);
+    return score >= MIN_LESSON_INJECTION_RELEVANCE;
+  });
   if (negative.length === 0) return null;
 
   const formatted = negative.map((l) => {
@@ -4373,8 +4485,10 @@ function isKnowledgeConflictHardBlockAction(toolName, toolInput = {}) {
 }
 
 function buildKnowledgeConflictContext(toolName, toolInput, lessons, entropy) {
-  const lessonContext = formatNegativeLessonContext(lessons);
-  const message = `Knowledge conflict warning: retrieved lessons disagree for this action (entropy ${entropy}). Treat the reminders below as cautionary context, but do not stop unrelated work solely because memory is noisy.`;
+  // Issue #3689: high entropy means the scorer disagrees with itself. Do NOT
+  // inject a disclaimer + noisy lessons into unrelated tool calls — suppress.
+  // Strict mode may still hard-block destructive/external side effects.
+  const message = `Knowledge conflict: retrieved lessons disagree for this action (entropy ${entropy}).`;
 
   if (isKnowledgeConflictHardBlockAction(toolName, toolInput)) {
     recordStat('retrieval_entropy_high', 'block', null, { toolName, toolInput });
@@ -4386,8 +4500,9 @@ function buildKnowledgeConflictContext(toolName, toolInput, lessons, entropy) {
     };
   }
 
-  recordStat('retrieval_entropy_high', 'warn', null, { toolName, toolInput });
-  return mergeContextStrings(`[ThumbGate] ${message}`, lessonContext);
+  // Count as log (not warn): we intentionally did not inject context.
+  recordStat('retrieval_entropy_high', 'log', null, { toolName, toolInput });
+  return null;
 }
 
 function extractActionContext(toolName, toolInput) {
@@ -4957,6 +5072,8 @@ module.exports = {
   currentScopeSessionId,
   isRemedyToolName,
   isCommandPositionPermissionChange,
+  isGhApiPrCreateCommand,
+  helperBypassActionKey,
   parseGitPathspec,
   canonicalizeGitCommand,
   canonicalizeCommandForGates,

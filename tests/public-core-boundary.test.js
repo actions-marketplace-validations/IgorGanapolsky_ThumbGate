@@ -275,10 +275,24 @@ test('public-core-boundary: npm bundle stays thin (file count ceiling)', () => {
   //   Lockstep with package-boundary + public-bundle-ratchet.
   // 511 -> 512 (2026-08-25): public/yt.html YouTube/CPC dedicated landing.
   // 512 -> 513 (2026-08-25): src/alert-noise-ledger.js (+1 measured npm pack).
-  // Public-shell runtime, not a Core feature: the packaged
-  // scripts/gates-engine.js requires it to suppress reminder lines it has
-  // already emitted this session.
-  const CEILING = 513;
+  // 517 -> 519 (2026-09-02): scripts/double-blind-eval-protocol.js (missing from files array since PR #3712).
+// 519 -> 522 (2026-09-04): radware-threat-defense.js + learn page + config/gates/radware-threat-defense-2026.json.
+  // 521 -> 522: scripts/nvidia-specdecode-al-doctor.js (AL/D doctor, landed #3762).
+  // 522 -> 523: scripts/package-manager-honesty-doctor.js — InfoQ pnpm 12
+  //   honesty steal without migrating off npm (public-shell CLI/doctor).
+  // 523 -> 525: scripts/workspace-search-route.js + skill — zg four-route FORMAT
+  //   steal onto existing rails (not @zvec/zvec-grep).
+  //   Lockstep with package-boundary + public-bundle-ratchet.
+  // 523 -> 525: jit-harness-compose (#3768).
+  // 525 -> 527: workspace-search-route.js + skill — zg four-route FORMAT.
+  //   Lockstep with package-boundary + public-bundle-ratchet.
+  // 527 -> 529: intent-governed-execution after zg #3770.
+  //   Lockstep with package-boundary + public-bundle-ratchet.
+  // 530 -> 532: test-all.js + find-dormant-requires.js (#3703 successor).
+  // 532 -> 534: allowlist-bridge-honesty.js + gitlab-sandbox-allowlist-not-trust skill.
+  // 534 -> 536: openui-catalog-compose-honesty.js + skill — OpenUI FORMAT steal
+  //   (catalog-compose-only / repair-before-claim; not a generative-UI SKU).
+  const CEILING = 536;
   assert.ok(
     files.length <= CEILING,
     `public npm bundle should stay <= ${CEILING} files, got ${files.length}. ` +

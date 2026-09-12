@@ -8,12 +8,14 @@ Key: Always dogfood the latest local changes before publishing.
 
 ## Session PR Management and System Hygiene
 
-- Start by reading all three repo directives, querying local ThumbGate memory,
-  and inspecting open PRs, remote branches, worktrees, and current `main` CI.
+- Start with `bin/agent-loop --health --json` (fail closed), then read all three
+  repo directives, query local ThumbGate memory, and inspect open PRs, **open
+  GitHub Issues**, remote branches, worktrees, and current `main` CI.
 - Reconcile GitHub Issues and Actions plus available Linear AI, Obsidian vault,
-  and standalone GitHub Copilot CLI surfaces. Record unavailable local
-  integrations and continue with deterministic `gh`, git, and repository
-  checks, which remain authoritative.
+  and standalone GitHub Copilot CLI surfaces. Close or advance actionable
+  Issues in the same session — do not leave the Issues board untouched while
+  only draining PRs. Record unavailable local integrations and continue with
+  deterministic `gh`, git, and repository checks, which remain authoritative.
 - Merge only review-complete PRs with terminal-green required checks, using
   `npm run pr:manage` and Trunk. Never approve, dismiss, bypass, or weaken a
   human-review or branch-protection requirement.
@@ -78,3 +80,7 @@ For every explicit PR-management and system-hygiene session:
 7. Record lessons in local memory and report whether memory helped or hindered.
 
 Use **“Done merging PRs. CI passing. System hygiene complete. Ready for next session.”** only when every condition above is verified. Otherwise report exact blockers and do not use that sentence.
+
+## Code search (Graphify-Labs)
+
+See `docs/agents/code-search.md`. Run `npm run graphify:setup` then `.graphify-venv/bin/graphify query`.

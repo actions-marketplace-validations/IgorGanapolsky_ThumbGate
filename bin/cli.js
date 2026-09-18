@@ -2692,6 +2692,135 @@ function jitHarnessCompose() {
   if (report.status === 'fail') process.exitCode = 1;
 }
 
+function tokenShuntHonesty() {
+  const args = parseArgs(process.argv.slice(3));
+  const {
+    buildTokenShuntHonestyReport,
+    formatTokenShuntHonestyReport,
+  } = require(path.join(PKG_ROOT, 'scripts', 'token-shunt-honesty'));
+  const report = buildTokenShuntHonestyReport(args);
+  if (args.json) {
+    console.log(JSON.stringify(report, null, 2));
+  } else {
+    process.stdout.write(formatTokenShuntHonestyReport(report));
+  }
+  if (args.strict && report.status !== 'ready') {
+    process.exitCode = 1;
+    return;
+  }
+  if (report.status === 'fail') process.exitCode = 1;
+}
+
+async function typesafeTypedQuestionsDoctor() {
+  const args = parseArgs(process.argv.slice(3));
+  const {
+    buildTypesafeTypedQuestionsReportAsync,
+    formatTypesafeTypedQuestionsReport,
+  } = require(path.join(PKG_ROOT, 'scripts', 'typesafe-typed-questions'));
+  const report = await buildTypesafeTypedQuestionsReportAsync(args);
+  if (args.json) {
+    console.log(JSON.stringify(report, null, 2));
+  } else {
+    process.stdout.write(formatTypesafeTypedQuestionsReport(report));
+  }
+  if (args.strict && report.status !== 'ready') {
+    process.exitCode = 1;
+    return;
+  }
+  if (report.status === 'fail') process.exitCode = 1;
+}
+
+function ciGhaBuildkitePatternsDoctor() {
+  const args = parseArgs(process.argv.slice(3));
+  const {
+    buildCiGhaBuildkitePatternsReport,
+    formatCiGhaBuildkitePatternsReport,
+  } = require(path.join(PKG_ROOT, 'scripts', 'ci-gha-buildkite-patterns'));
+  const report = args['map-only']
+    ? buildCiGhaBuildkitePatternsReport({ ...args, mapOnly: true })
+    : buildCiGhaBuildkitePatternsReport({
+      json: Boolean(args.json),
+      strict: Boolean(args.strict),
+      mapOnly: Boolean(args['map-only']),
+      annotate: Boolean(args.annotate),
+      cloneBuildkite: Boolean(args['clone-buildkite']),
+      migrate: Boolean(args.migrate),
+      rerunQueued: Boolean(args['rerun-queued']),
+      quarantine: Boolean(args.quarantine),
+      jobsJson: args['jobs-json'] || '',
+      workflow: args.workflow || '',
+    });
+  if (args.json) {
+    console.log(JSON.stringify(report, null, 2));
+  } else {
+    process.stdout.write(formatCiGhaBuildkitePatternsReport(report));
+  }
+  if (args.strict && report.status !== 'ready') {
+    process.exitCode = 1;
+    return;
+  }
+  if (report.status === 'fail') process.exitCode = 1;
+}
+
+function deeppatternDisciplineHonestyDoctor() {
+  const args = parseArgs(process.argv.slice(3));
+  const {
+    buildDeeppatternDisciplineHonestyReport,
+    formatDeeppatternDisciplineHonestyReport,
+  } = require(path.join(PKG_ROOT, 'scripts', 'deeppattern-discipline-honesty'));
+  const report = buildDeeppatternDisciplineHonestyReport(args);
+  if (args.json) {
+    console.log(JSON.stringify(report, null, 2));
+  } else {
+    process.stdout.write(formatDeeppatternDisciplineHonestyReport(report));
+  }
+  if (args.strict && report.status !== 'ready') {
+    process.exitCode = 1;
+    return;
+  }
+  if (report.status === 'fail') process.exitCode = 1;
+}
+
+function colabComputeHonestyDoctor() {
+  const args = parseArgs(process.argv.slice(3));
+  const {
+    buildColabComputeHonestyReport,
+    formatColabComputeHonestyReport,
+  } = require(path.join(PKG_ROOT, 'scripts', 'colab-compute-honesty'));
+  const report = buildColabComputeHonestyReport(args);
+  if (args.json) {
+    console.log(JSON.stringify(report, null, 2));
+  } else {
+    process.stdout.write(formatColabComputeHonestyReport(report));
+  }
+  if (args.strict && report.status !== 'ready') {
+    process.exitCode = 1;
+    return;
+  }
+  if (report.status === 'fail') process.exitCode = 1;
+}
+
+function cobbleHotStoreSplit() {
+  const args = parseArgs(process.argv.slice(3));
+  const {
+    buildCobbleHotStoreSplitReport,
+    formatCobbleHotStoreSplitReport,
+  } = require(path.join(PKG_ROOT, 'scripts', 'cobble-hot-store-split'));
+  const report = buildCobbleHotStoreSplitReport(args);
+
+  if (args.json) {
+    console.log(JSON.stringify(report, null, 2));
+  } else {
+    process.stdout.write(formatCobbleHotStoreSplitReport(report));
+  }
+
+  if (args.strict && report.status !== 'ready') {
+    process.exitCode = 1;
+    return;
+  }
+  if (report.status === 'fail') process.exitCode = 1;
+}
+
 function allowlistBridgeHonestyDoctor() {
   const args = parseArgs(process.argv.slice(3));
   const {
@@ -3012,6 +3141,25 @@ async function gateCheck() {
         reason: 'operator-bypass-opt-in',
         hookSpecificOutput: { hookEventName: 'PreToolUse', additionalContext: '' }
       }) + '\n');
+      return;
+    }
+
+    const { evaluatePreToolUse } = require(path.join(PKG_ROOT, 'scripts', 'token-shunt-honesty'));
+    const shunt = evaluatePreToolUse({
+      toolName: input.tool_name || input.toolName,
+      toolInput: input.tool_input || input.toolInput || {},
+      cwd: input.cwd || process.cwd(),
+    });
+    if (shunt && shunt.ok === false) {
+      process.stdout.write(`${JSON.stringify({
+        decision: 'block',
+        reason: `token-shunt: ${shunt.reason}`,
+        hookSpecificOutput: {
+          hookEventName: 'PreToolUse',
+          permissionDecision: 'deny',
+          permissionDecisionReason: `token-shunt: ${shunt.reason}`,
+        },
+      })}\n`);
       return;
     }
 
@@ -3562,6 +3710,12 @@ function help() {
   console.log('  openui-catalog-compose-honesty Catalog-compose-only + repair-before-claim (OpenUI FORMAT)');
   console.log('  allowlist-bridge-honesty Audit allowlisted registries/proxies as hops, not trust boundaries');
   console.log('  jit-harness-compose   Compose memory/planning/action/capability onto existing rails (JIT FORMAT)');
+  console.log('  cobble-hot-store-split Split durable/delivery/hot lesson planes (CobbleDB FORMAT)');
+  console.log('  token-shunt-honesty   Intercept untargeted bulk reads (Portal FORMAT; not shunt@portal)');
+  console.log('  typesafe-typed-questions Typed noul/choice/score + code-owned route (TypeSafe FORMAT; not Jev)');
+  console.log('  ci-gha-buildkite-patterns First-fail + PR fail-fast on GitHub Actions (Buildkite FORMAT; not Buildkite)');
+  console.log('  deeppattern-discipline-honesty Layer-check + evidence-closeout (DeepPattern FORMAT; not AQG/DE)');
+  console.log('  colab-compute-honesty   Compute-unit honesty from Colab /signup (not a GPU SKU)');
   console.log('  workspace-search-route     Route query to rg/fts/vector/hybrid/graph (zg FORMAT)');
   console.log('  intent-governed-execution  NL intent → classify/authorize/gate/HITL/evidence (CyberStrike FORMAT)');
   console.log('  background-governance Background-agent run report and dispatch risk check');
@@ -3605,6 +3759,12 @@ function help() {
   console.log('  npx thumbgate openui-catalog-compose-honesty --catalog=catalog.json --stream=compose.txt --repair --json');
   console.log('  npx thumbgate allowlist-bridge-honesty --json');
   console.log('  npx thumbgate jit-harness-compose --task="implement PreToolUse gate fix" --json');
+  console.log('  npx thumbgate cobble-hot-store-split --json');
+  console.log('  npx thumbgate token-shunt-honesty --json --lines=800');
+  console.log('  npx thumbgate typesafe-typed-questions --json --tool-name=Bash --command="git push --force origin main"');
+  console.log('  npx thumbgate ci-gha-buildkite-patterns --json --map-only');
+  console.log('  npx thumbgate deeppattern-discipline-honesty --json --map-only');
+  console.log('  npx thumbgate colab-compute-honesty --json --map-only');
   console.log('  npx thumbgate workspace-search-route --query="how does X connect" --json');
   console.log('  npx thumbgate intent-governed-execution --intent="railway deploy" --json');
   console.log('  npx thumbgate upstream-contributions --max-repos=10 --write');
@@ -3646,6 +3806,10 @@ const SUBCOMMAND_HELP = {
   lessons:       'Usage: npx thumbgate lessons [--query="..."] [--limit=N]\n\nSearch the lesson database (Pro feature).',
   search:        'Usage: npx thumbgate search <query>\n\nSearch ThumbGate knowledge base (Pro feature).',
   'gate-check':  'Usage: npx thumbgate gate-check\n\nPreToolUse hook interface: reads tool call JSON from stdin, outputs gate verdict.',
+  'typesafe-typed-questions': 'Usage: npx thumbgate typesafe-typed-questions [--payload=path] [--tool-name=Bash] [--command="..."] [--json] [--map-only] [--clone-jev]\n\nTypeSafe FORMAT steal: typed noul/choice/score over a PreToolUse payload, code-owned pass/review/block. Does not install typesafe-sdk or call Jev.',
+  'ci-gha-buildkite-patterns': 'Usage: npx thumbgate ci-gha-buildkite-patterns [--jobs-json=path] [--workflow=path] [--json] [--map-only]\n\nBuildkite pipeline FORMAT on GitHub Actions: first-fail step, PR fail-fast, needs:/skip/annotations. Does not add Buildkite.',
+  'deeppattern-discipline-honesty': 'Usage: npx thumbgate deeppattern-discipline-honesty [--claim="..."] [--closeout=path.md] [--json] [--map-only]\n\nDeepPattern FORMAT steal: layer-check + evidence-closeout. Does not install AQG/Decision Engine.',
+  'colab-compute-honesty': 'Usage: npx thumbgate colab-compute-honesty [--claim="..."] [--plan-proof=proplus] [--json] [--map-only]\n\nColab /signup FORMAT steal: Compute Units ≠ dedicated GPU; Subscribe ≠ receipt. Does not buy Pro/Pro+.',
   'claim-stop-check': 'Usage: npx thumbgate claim-stop-check\n\nClaude Stop-hook interface: reads the hook payload from stdin and blocks factual claims that disagree with configured sources.',
   'verify-claims': 'Usage: npx thumbgate verify-claims --claim="the row count is 1,284" [--config=.thumbgate/claim-verifiers.json] [--cwd=path] [--json]\n\nRecheck supported factual claims against operator-configured SQLite, filesystem, and JSON sources. Exits non-zero on mismatch, missing verifier, or verifier error.',
   'hermes-gate': 'Usage: npx thumbgate hermes-gate\n\nNous Research Hermes Agent pre_tool_call shell hook: reads Hermes tool-call JSON from stdin, runs the ThumbGate gate pipeline (strict by default), and outputs {"decision":"block","reason":...} to veto or {} to allow. Gates terminal/patch/skill_manage etc. See adapters/hermes/config.yaml.',
@@ -4264,6 +4428,44 @@ switch (COMMAND) {
   case 'jit-harness':
   case 'harness-compose':
     jitHarnessCompose();
+    break;
+  case 'cobble-hot-store-split':
+  case 'cobble-hot-store':
+  case 'cobbledb-split':
+  case 'hot-store-split':
+    cobbleHotStoreSplit();
+    break;
+  case 'token-shunt-honesty':
+  case 'token-shunt':
+  case 'shunt-honesty':
+    tokenShuntHonesty();
+    break;
+  case 'typesafe-typed-questions':
+  case 'typesafe-hook':
+  case 'typed-questions':
+  case 'jev-typed-questions':
+    typesafeTypedQuestionsDoctor().catch((err) => {
+      console.error(err && err.stack ? err.stack : err);
+      process.exitCode = 1;
+    });
+    break;
+  case 'colab-compute-honesty':
+  case 'colab-honesty':
+  case 'compute-unit-honesty':
+    colabComputeHonestyDoctor();
+    break;
+  case 'ci-gha-buildkite-patterns':
+  case 'ci-buildkite-patterns':
+  case 'gha-buildkite-honesty':
+  case 'first-fail-gha':
+    ciGhaBuildkitePatternsDoctor();
+    break;
+  case 'deeppattern-discipline-honesty':
+  case 'deeppattern-honesty':
+  case 'layer-check-honesty':
+  case 'evidence-closeout-honesty':
+  case 'aqg-de-honesty':
+    deeppatternDisciplineHonestyDoctor();
     break;
   case 'workspace-search-route':
   case 'zg-search-route':

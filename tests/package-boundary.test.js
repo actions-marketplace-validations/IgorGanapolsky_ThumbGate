@@ -491,8 +491,14 @@ test('npm package ships a slim runtime boundary instead of repo/dev surfaces', (
   // 530 -> 532: test-all.js + find-dormant-requires.js (aggregate runner, #3703 successor).
   // 532 -> 534: allowlist-bridge-honesty.js + gitlab-sandbox-allowlist-not-trust skill.
   // 534 -> 536: openui-catalog-compose-honesty.js + skill — OpenUI FORMAT steal.
-    manifest.fileCount <= 536,
-    `npm package should stay <= 536 files, got ${manifest.fileCount}`
+  // 536 -> 538: cobble-hot-store-split.js + skill — CobbleDB FORMAT steal.
+  // 538 -> 540: token-shunt-honesty.js + skill — Spotify Portal/shunt FORMAT.
+  // 540 -> 542: typesafe-typed-questions.js + skill — TypeSafe FORMAT steal.
+  // 542 -> 544: colab-compute-honesty.js + skill — Colab /signup CU honesty.
+  // 544 -> 546: deeppattern-discipline-honesty.js + skill — DeepPattern layer-check + evidence-closeout.
+  // 546 -> 548: ci-gha-buildkite-patterns.js + skill — Buildkite FORMAT on GHA.
+    manifest.fileCount <= 548,
+    `npm package should stay <= 548 files, got ${manifest.fileCount}`
   );
   // Ceiling bumped from 2.75 MB → 2.85 MB (2026-04-16) to accommodate the
   // incremental review-delta demo content in public/dashboard.html landing
@@ -703,8 +709,27 @@ test('npm package ships a slim runtime boundary instead of repo/dev surfaces', (
   // 5,606 over the old cap. Narrow headroom retained.
   assert.ok(
   // Bumped 8.35 MB -> 8.40 MB (2026-09-04): intent-governed-execution after zg.
-    manifest.unpackedSize <= 8_400_000,
-    `npm package should stay <= 8.40 MB unpacked, got ${manifest.unpackedSize}`
+  // Bumped 8.40 MB -> 8.42 MB (2026-09-16): cobble-hot-store-split.js + skill
+  //   (CobbleDB three-plane FORMAT steal). Measured 8,409,898 unpacked — 9,898
+  //   over the old cap. Narrow headroom retained.
+  // Bumped 8.42 MB -> 8.44 MB (2026-09-16): token-shunt-honesty.js + skill.
+  // Bumped 8.44 MB -> 8.47 MB (2026-09-17): typesafe-typed-questions.js + skill
+  //   (TypeSafe noul/choice/score FORMAT steal). Measured 8,468,952 unpacked —
+  //   28,952 over the old cap. Narrow headroom retained.
+  // Bumped 8.47 MB -> 8.48 MB (2026-09-17): CodeRabbit follow-up (write-tool
+  //   tamper gate + noul action validation). CI measured 8,471,013 unpacked —
+  //   1,013 over the old cap.
+  // Bumped 8.48 MB -> 8.49 MB (2026-09-17): colab-compute-honesty.js + skill.
+  // Measured 8,487,846 unpacked — 7,846 over the old cap.
+  // Bumped 8.49 MB -> 8.52 MB (2026-09-17): deeppattern-discipline-honesty.js + skill.
+  // Measured 8,511,706 unpacked — 21,706 over the 8.49 MB cap.
+  // Bumped 8.52 MB -> 8.53 MB (2026-09-18): typesafe-parallel-questions-batch on
+  //   main tip 60f76d8f (DeepPattern already merged). Measured 8,524,203 unpacked
+  //   — 4,203 over the 8.52 MB cap.
+  // Bumped 8.53 MB -> 8.55 MB (2026-09-18): ci-gha-buildkite-patterns.js + skill.
+  // Measured 8,544,410 unpacked — 14,410 over the 8.53 MB cap. File-count 548.
+    manifest.unpackedSize <= 8_550_000,
+    `npm package should stay <= 8.55 MB unpacked, got ${manifest.unpackedSize}`
   );
 
   for (const file of requiredRuntimeFiles) {

@@ -238,7 +238,19 @@ const path = require('node:path');
 //            (GitLab 2026-09 allowlist-as-bridge FORMAT steal).
 // 534 → 536: openui-catalog-compose-honesty.js + skill — OpenUI FORMAT steal
 //            (catalog-compose-only, root-first, repair-before-claim; not @openuidev).
-const BASELINE_FILE_COUNT = 536;
+// 536 → 538: cobble-hot-store-split.js + skill — CobbleDB three-plane FORMAT
+//            steal onto existing lesson rails (not RocksDB/YTsaurus).
+// 538 → 540: token-shunt-honesty.js + skill — Spotify Portal/shunt FORMAT
+//            (untargeted Read intercept; not shunt@portal).
+// 540 → 542: typesafe-typed-questions.js + skill — TypeSafe noul/choice/score
+//            FORMAT steal onto PreToolUse (not typesafe-sdk / Jev).
+// 542 → 544: colab-compute-honesty.js + skill — Colab /signup CU honesty
+//            (subscribe≠receipt; not a GPU SKU).
+// 544 → 546: deeppattern-discipline-honesty.js + skill — DeepPattern
+//            layer-check + evidence-closeout FORMAT (not AQG/DE).
+// 546 → 548: ci-gha-buildkite-patterns.js + skill — Buildkite pipeline
+//            FORMAT on GitHub Actions (not a Buildkite vendor).
+const BASELINE_FILE_COUNT = 548;
 
 function readBundleSnapshot() {
   const repoRoot = path.resolve(__dirname, '..');

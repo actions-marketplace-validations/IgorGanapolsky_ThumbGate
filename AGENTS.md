@@ -119,6 +119,71 @@ npm run memory:vs-rag -- --query "what did we decide?" --entity entity-id --proj
 
 Details: [`docs/agents/memory-vs-rag.md`](./docs/agents/memory-vs-rag.md).
 
+## Cobble hot-store split (honest)
+
+Separate durable lesson state, batched promotion, and query-time MultiGet. Map onto existing rails; never clone CobbleDB / RocksDB / YTsaurus. Do not quote Perplexity 5× / 20% as ours.
+
+```bash
+npx thumbgate cobble-hot-store-split --json
+npx thumbgate cobble-hot-store-split --trace=tests/fixtures/cobble-hot-store-split-coupled.json --json
+```
+
+Skill: `.agents/skills/cobble-hot-store-compare-not-clone/SKILL.md` (`/cobble-hot-store-compare-not-clone`). Details: `docs/agents/cobble-hot-store-split.md`.
+
+## Token-shunt honesty (Portal FORMAT)
+
+Untargeted Read above 350 lines is blocked. Bare `cat` of large files is blocked. Do not install `shunt@portal` or claim 90% savings from GitHub App 162279530.
+
+```bash
+npx thumbgate token-shunt-honesty --json --lines=800
+```
+
+Skill: `.agents/skills/token-shunt-honesty-not-clone/SKILL.md`. Details: `docs/agents/token-shunt-honesty.md`.
+
+## TypeSafe typed questions (FORMAT steal)
+
+Typed noul/choice/score over one PreToolUse state; code owns pass|review|block. Do not install `typesafe-sdk`, call Jev, or unpark the LLM adjudicator (#3690/#3687).
+
+```bash
+npx thumbgate typesafe-typed-questions --json --map-only
+npx thumbgate typesafe-typed-questions --json --tool-name=Bash --command='git push --force origin main'
+```
+
+Skill: `.agents/skills/typesafe-typed-questions-not-clone/SKILL.md`. Details: `docs/agents/typesafe-typed-questions.md`.
+
+## DeepPattern discipline honesty (FORMAT steal)
+
+Layer-check + evidence-closeout from DeepPattern AQG/DE onto existing rails. Do not install AQG, Decision Engine, or `dp-install`.
+
+```bash
+npx thumbgate deeppattern-discipline-honesty --json --map-only
+npx thumbgate deeppattern-discipline-honesty --json --claim='OpenRouter replaces ThumbGate'
+npx thumbgate deeppattern-discipline-honesty --json --closeout=pr-body.md --strict
+```
+
+Skill: `.agents/skills/deeppattern-discipline-honesty-not-clone/SKILL.md`. Details: `docs/agents/deeppattern-discipline-honesty.md`.
+
+## CI GHA Buildkite patterns (FORMAT steal)
+
+Steal first-fail step identity, PR fail-fast, `needs:` wait honesty, skip conditions, and `GITHUB_STEP_SUMMARY` annotations onto existing GitHub Actions. Do not add Buildkite Pipelines, agents, Test Engine, or a second required check.
+
+```bash
+npx thumbgate ci-gha-buildkite-patterns --json --map-only
+npx thumbgate ci-gha-buildkite-patterns --json --workflow=.github/workflows/ci.yml
+```
+
+Skill: `.agents/skills/ci-gha-buildkite-patterns-not-clone/SKILL.md`. Details: `docs/agents/ci-gha-buildkite-patterns.md`.
+
+## Colab compute honesty (FORMAT steal)
+
+Colab /signup sells Compute Units, not a dedicated GPU. Subscribe visible ≠ subscribed. Do not buy Pro/Pro+/CU. Do not clone colab-cli.
+
+```bash
+npx thumbgate colab-compute-honesty --json --map-only
+```
+
+Skill: `.agents/skills/colab-compute-honesty-not-clone/SKILL.md`. Details: `docs/agents/colab-compute-honesty.md`.
+
 ## Canonical Product Scope
 
 - The only active product, repository, npm package, and launch surface is **ThumbGate**:

@@ -292,7 +292,15 @@ test('public-core-boundary: npm bundle stays thin (file count ceiling)', () => {
   // 532 -> 534: allowlist-bridge-honesty.js + gitlab-sandbox-allowlist-not-trust skill.
   // 534 -> 536: openui-catalog-compose-honesty.js + skill — OpenUI FORMAT steal
   //   (catalog-compose-only / repair-before-claim; not a generative-UI SKU).
-  const CEILING = 536;
+  // 536 -> 538: cobble-hot-store-split.js + skill — CobbleDB three-plane FORMAT
+  //   steal onto existing lesson rails (not a KV SKU).
+  // 538 -> 540: token-shunt-honesty.js + skill — Spotify Portal/shunt FORMAT.
+  // 540 -> 542: typesafe-typed-questions.js + skill — TypeSafe FORMAT steal
+  //   (typed noul/choice/score + code-owned route; not a Jev SKU).
+  // 542 -> 544: colab-compute-honesty.js + skill — Colab CU honesty.
+  // 544 -> 546: deeppattern-discipline-honesty.js + skill — layer-check + closeout.
+  // 546 -> 548: ci-gha-buildkite-patterns.js + skill — Buildkite FORMAT on GHA.
+  const CEILING = 548;
   assert.ok(
     files.length <= CEILING,
     `public npm bundle should stay <= ${CEILING} files, got ${files.length}. ` +
